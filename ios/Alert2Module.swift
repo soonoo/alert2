@@ -1,48 +1,88 @@
 import ExpoModulesCore
+import UIKit
+
+enum ButtonStyle: String, Enumerable {
+  case `default`
+  case destructive
+  case cancel
+}
+
+struct Button: Record {
+  @Field
+  var text: String = "utf8"
+
+  @Field
+  var style: ButtonStyle = .default
+}
+
+enum UserInterfaceStyle: String, Enumerable {
+  case light
+  case dark
+}
+struct Option: Record {
+  @Field
+  var userInterfaceStyle: UserInterfaceStyle = .light
+}
 
 public class Alert2Module: Module {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
   public func definition() -> ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('Alert2')` in JavaScript.
     Name("Alert2")
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants([
-      "PI": Double.pi
-    ])
+    AsyncFunction("alert") { (title: String, message: String, buttons: [Button], option: Option, promise: Promise) in
+      DispatchQueue.main.async {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+        if let rootViewController = windowScene?.windows.filter({($0.isKeyWindow)}).first?.rootViewController {
+          let alert = UIAlertController(
+            title: title,
+            message: message,
+            preferredStyle: .alert
+          )
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      return "Hello world! 👋"
-    }
+          if option.userInterfaceStyle == .dark {
+            alert.overrideUserInterfaceStyle = .dark
+          } else {
+            alert.overrideUserInterfaceStyle = .light
+          }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { (value: String) in
-      // Send an event to JavaScript.
-      self.sendEvent("onChange", [
-        "value": value
-      ])
-    }
-
-    // Enables the module to be used as a native view. Definition components that are accepted as part of the
-    // view definition: Prop, Events.
-    View(Alert2View.self) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { (view: Alert2View, url: URL) in
-        if view.webView.url != url {
-          view.webView.load(URLRequest(url: url))
+          for buttonIndex in buttons.indices {
+            let button = buttons[buttonIndex]
+            let style: UIAlertAction.Style
+            if button.style == .destructive {
+              style = .destructive
+            } else if button.style == .cancel {
+              style = .cancel
+            } else {
+              style = .default
+            }
+            alert.addAction(UIAlertAction(title: button.text, style: style) { action in
+              promise.resolve(buttonIndex)
+            })
+          }
+          rootViewController.present(alert, animated: true, completion: nil)
         }
       }
+    }
 
-      Events("onLoad")
+    Function("prompt") { (title: String, message: String) in
+      DispatchQueue.main.async {
+        if let rootViewController = UIApplication.shared.keyWindow?.rootViewController {
+          let alertController = UIAlertController(
+            title: title,
+            message: message,
+            preferredStyle: .alert
+          )
+          alertController.addTextField { textField in
+            textField.placeholder = "Enter something..."
+          }
+          alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+          alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            let userInput = alertController.textFields?.first?.text
+          })
+          rootViewController.present(alertController, animated: true, completion: nil)
+        }
+      }
     }
   }
 }

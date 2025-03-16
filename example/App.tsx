@@ -1,38 +1,39 @@
-import { useEvent } from 'expo';
-import Alert2, { Alert2View } from 'alert2';
-import { Button, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { useEvent } from "expo";
+import Alert2 from "alert2";
+import Alert from "react-native";
+import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
 
 export default function App() {
-  const onChangePayload = useEvent(Alert2, 'onChange');
+  console.log(Alert2.alert);
+  const alertParam = {
+    title: "Hello",
+    message: "World",
+    buttons: [
+      { text: "OK", onPress: () => console.log("OK Pressed") },
+      {
+        text: "cancel",
+        onPress: () => console.log("OK Pressed"),
+        style: "destructive" as const,
+      },
+    ],
+    options: { cancelable: true },
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
-        <Text style={styles.header}>Module API Example</Text>
-        <Group name="Constants">
-          <Text>{Alert2.PI}</Text>
-        </Group>
-        <Group name="Functions">
-          <Text>{Alert2.hello()}</Text>
-        </Group>
-        <Group name="Async functions">
-          <Button
-            title="Set value"
-            onPress={async () => {
-              await Alert2.setValueAsync('Hello from JS!');
-            }}
-          />
-        </Group>
-        <Group name="Events">
-          <Text>{onChangePayload?.value}</Text>
-        </Group>
-        <Group name="Views">
-          <Alert2View
-            url="https://www.example.com"
-            onLoad={({ nativeEvent: { url } }) => console.log(`Loaded: ${url}`)}
-            style={styles.view}
-          />
-        </Group>
+        <Pressable
+          onPress={async () => {
+            Alert2.alert(
+              alertParam.title,
+              alertParam.message,
+              alertParam.buttons,
+              // alertParam.options,
+            );
+          }}
+        >
+          <Text>Press me</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -58,13 +59,13 @@ const styles = {
   },
   group: {
     margin: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
   },
   container: {
     flex: 1,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
   view: {
     flex: 1,

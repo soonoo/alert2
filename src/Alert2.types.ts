@@ -1,19 +1,19 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
-export type OnLoadEventPayload = {
-  url: string;
-};
-
-export type Alert2ModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
-};
-
-export type ChangeEventPayload = {
-  value: string;
-};
-
-export type Alert2ViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
-  style?: StyleProp<ViewStyle>;
-};
+export interface Alert2 {
+  alert(
+    title: string,
+    message?: string,
+    buttons?: {
+      text: string;
+      onPress?: Function;
+      style?: 'default' | 'cancel' | 'destructive';
+      isPreferred?: boolean;
+    }[],
+    options?: {
+      cancelable?: boolean;
+      userInterfaceStyle?: 'light' | 'dark';
+      onDismiss?: Function;
+    }
+  )
+}
